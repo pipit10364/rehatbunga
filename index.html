@@ -16,17 +16,10 @@
 
   <!-- AMBIENT SOUND TOGGLE (fixed, visible on every screen) -->
   <div class="sound-control" id="sound-control">
-    <button class="sound-toggle-btn" id="sound-toggle-btn" type="button" aria-pressed="false">
+    <button class="sound-toggle-btn" id="sound-toggle-btn" type="button" aria-pressed="false" aria-label="Nyalakan atau matikan suara alam">
       <span class="sound-toggle-icon" aria-hidden="true">🔈</span>
       <span class="sound-toggle-label">Suara alam</span>
     </button>
-    <input
-      type="range"
-      class="sound-volume-slider"
-      id="sound-volume-slider"
-      min="0" max="100" value="45" step="5"
-      aria-label="Volume suara alam"
-      hidden>
   </div>
 
   <!-- INTRO MODAL -->
@@ -162,6 +155,7 @@
   <script src="js/flowers-data.js"></script>
   <script src="js/ambient-bg.js"></script>
   <script src="js/ambient-sound.js"></script>
+  <script src="js/sfx.js"></script>
   <script src="js/shapes.js"></script>
   <script src="js/board.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
