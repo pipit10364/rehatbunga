@@ -125,6 +125,7 @@
     const { rows, cols } = findFullLines();
     if (rows.length || cols.length){
       const lines = clearLines(rows, cols);
+      window.SFX && window.SFX.playClear(lines);
       totalLinesCleared += lines;
       const ratio = Math.min(1, totalLinesCleared / MAX_CLEARS_FOR_FULL_REVEAL);
       callbacks.onProgress && callbacks.onProgress(ratio);

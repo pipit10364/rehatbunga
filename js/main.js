@@ -45,8 +45,7 @@
     playAgainBtn: document.getElementById('play-again-btn'),
 
     soundToggleBtn: document.getElementById('sound-toggle-btn'),
-    soundToggleIcon: document.querySelector('#sound-toggle-btn .sound-toggle-icon'),
-    soundVolumeSlider: document.getElementById('sound-volume-slider')
+    soundToggleIcon: document.querySelector('#sound-toggle-btn .sound-toggle-icon')
   };
 
   function loadFlowersData(){
@@ -238,16 +237,11 @@
 
   el.soundToggleBtn.addEventListener('click', () => {
     if (!window.AmbientSound) return;
-    const on = window.AmbientSound.toggle();
-    el.soundToggleBtn.classList.toggle('is-active', on);
-    el.soundToggleBtn.setAttribute('aria-pressed', String(on));
-    el.soundToggleIcon.textContent = on ? '🔊' : '🔈';
-    el.soundVolumeSlider.hidden = !on;
-  });
-
-  el.soundVolumeSlider.addEventListener('input', () => {
-    if (!window.AmbientSound) return;
-    window.AmbientSound.setVolume(Number(el.soundVolumeSlider.value) / 100);
+    window.AmbientSound.toggle((on) => {
+      el.soundToggleBtn.classList.toggle('is-active', on);
+      el.soundToggleBtn.setAttribute('aria-pressed', String(on));
+      el.soundToggleIcon.textContent = on ? '🔊' : '🔈';
+    });
   });
 
   // ---------- boot ----------

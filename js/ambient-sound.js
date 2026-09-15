@@ -1,9 +1,14 @@
 /**
  * Ambient nature sound: plays a real looped audio file
- * (assets/sounds/suara-alam.mp3) instead of a synthesized sound.
- * Starts OFF — browsers block audio-with-sound until a real user
- * gesture, so this only ever turns on from a click on #sound-toggle-btn
- * (see main.js).
+ * (assets/sounds/suara-alam.mp3). Starts OFF — browsers block audio
+ * until a real user gesture, so this only ever turns on from a click
+ * on #sound-toggle-btn (see main.js).
+ *
+ * toggle() is async-aware: it doesn't just flip a flag, it waits to see
+ * whether audio.play() actually succeeds (browsers can reject it, e.g.
+ * if the file 404s or autoplay is blocked) and reports the *real*
+ * resulting state back through the callback, so the UI never shows
+ * "on" while the file is actually silent.
  */
 (function(){
 
@@ -12,9 +17,13 @@
   audio.preload = 'auto';
   audio.volume = 0;
 
+  const TARGET_VOLUME = 0.45;
   let isOn = false;
-  let targetVolume = 0.45;
   let fadeTimer = null;
+
+  audio.addEventListener('error', () => {
+    console.warn('Ruang Rehat Bunga: file suara tidak bisa dimuat (assets/sounds/suara-alam.mp3). Cek nama file & lokasinya di repo.');
+  });
 
   function fadeTo(target, ms){
     clearInterval(fadeTimer);
@@ -27,34 +36,36 @@
     }, 40);
   }
 
-  function turnOn(){
-    isOn = true;
-    audio.play().catch(() => { isOn = false; });
-    fadeTo(targetVolume, 900);
-  }
-
   function turnOff(){
     isOn = false;
-    fadeTo(0, 600);
-    setTimeout(() => { if (!isOn) audio.pause(); }, 650);
+    fadeTo(0, 500);
+    setTimeout(() => { if (!isOn) audio.pause(); }, 550);
   }
 
   window.AmbientSound = {
-    toggle(){
-      if (isOn) turnOff(); else turnOn();
-      return isOn;
-    },
-    isOn(){ return isOn; },
-    // volume: 0 to 1. Applied immediately if currently playing; always
-    // remembered as the level to fade in to next time it's turned on.
-    setVolume(v){
-      targetVolume = Math.max(0, Math.min(1, v));
+    /**
+     * @param {(on: boolean) => void} onSettled called once we know the
+     *   real state (playback actually started, or actually failed).
+     */
+    toggle(onSettled){
       if (isOn){
-        clearInterval(fadeTimer);
-        audio.volume = targetVolume;
+        turnOff();
+        onSettled && onSettled(false);
+        return;
       }
+      audio.play()
+        .then(() => {
+          isOn = true;
+          fadeTo(TARGET_VOLUME, 900);
+          onSettled && onSettled(true);
+        })
+        .catch((err) => {
+          console.warn('Ruang Rehat Bunga: suara alam gagal diputar.', err);
+          isOn = false;
+          onSettled && onSettled(false);
+        });
     },
-    getVolume(){ return targetVolume; }
+    isOn(){ return isOn; }
   };
 
 })();
