@@ -211,17 +211,10 @@ button{ font-family: inherit; }
   background: rgba(251, 249, 242, 0.95);
 }
 
-.sound-volume-slider{
-  width: 90px;
-  accent-color: var(--moss-deep);
-  cursor: pointer;
-}
-
 @media (max-width: 640px){
   .sound-control{ top: 10px; right: 10px; }
   .sound-toggle-btn{ padding: 7px 10px; font-size: 12px; }
   .sound-toggle-label{ display: none; }
-  .sound-volume-slider{ width: 64px; }
 }
 
 /* ---------- overlays / modals ---------- */
