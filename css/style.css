@@ -119,17 +119,30 @@ button{ font-family: inherit; }
     display: grid;
     grid-template-columns: 200px minmax(380px, 560px) 260px;
     grid-template-areas:
-      "tray board header"
-      "tray board footer";
+      "tray board sidepanel"
+      "tray board sidepanel";
     align-items: start;
     gap: 28px;
   }
 
+  .side-panel{
+    grid-area: sidepanel;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+  }
+
   .game-header{
-    grid-area: header;
-    text-align: left;
+    width: 100%;
+    text-align: center;
     margin-bottom: 0;
-    padding-top: 6px;
+  }
+
+  .game-title{
+    font-size: 40px;
   }
 
   .board-wrap{
@@ -139,8 +152,10 @@ button{ font-family: inherit; }
 
   .tray{
     grid-area: tray;
+    align-self: stretch;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 16px;
     padding: 16px 10px;
     background: var(--surface);
@@ -156,9 +171,9 @@ button{ font-family: inherit; }
   }
 
   .footer-row{
-    grid-area: footer;
-    justify-content: flex-start;
-    margin-top: 4px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 0;
   }
 }
 
@@ -508,7 +523,7 @@ button{ font-family: inherit; }
 
 .flip-front .flower-photo{
   width: 100%;
-  aspect-ratio: 4/3;
+  height: 220px;
   object-fit: cover;
 }
 
@@ -674,7 +689,9 @@ button{ font-family: inherit; }
 
 @media (min-width: 900px){
   .victory-overlay .modal-card{ max-width: 780px; }
-  .flip-card-inner{ min-height: 440px; }
+  .flip-card-inner{ min-height: 480px; }
+
+  .flip-front .flower-photo{ height: 280px; }
 
   .flip-back-panels{
     width: 100%;
