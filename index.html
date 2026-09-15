@@ -8,6 +8,12 @@
 </head>
 <body>
 
+  <!-- AMBIENT ROTATING FLOWER BACKGROUND (fixed, behind everything) -->
+  <div class="ambient-bg" id="ambient-bg" aria-hidden="true">
+    <div class="ambient-bg-layer" id="ambient-bg-a"></div>
+    <div class="ambient-bg-layer" id="ambient-bg-b"></div>
+  </div>
+
   <!-- INTRO MODAL -->
   <div class="overlay" id="intro-overlay">
     <div class="modal-card">
@@ -83,17 +89,40 @@
             </div>
           </div>
           <div class="flip-face flip-back">
-            <p class="flip-back-eyebrow">pesan untukmu</p>
-            <p class="flower-message" id="flower-message"></p>
-            <form class="wish-form" id="wish-form">
-              <textarea
-                class="wish-field"
-                id="wish-input"
-                maxlength="500"
-                placeholder="Tuliskan cerita, doa, atau harapanmu hari ini..."
-                required></textarea>
-              <button type="submit" class="btn-primary">Kirim Harapan</button>
-            </form>
+            <div class="flip-back-panels" id="flip-back-panels">
+
+              <div class="panel panel-message">
+                <p class="flip-back-eyebrow">pesan untukmu</p>
+                <p class="flower-message" id="flower-message"></p>
+                <button type="button" class="btn-primary panel-write-btn" id="go-write-btn">Tulis Harapanmu</button>
+              </div>
+
+              <div class="panel panel-write">
+                <button type="button" class="link-btn panel-back-btn" id="back-to-message-btn">&larr; Kembali ke pesan</button>
+                <p class="flip-back-eyebrow panel-write-eyebrow">ruang untuk menulis</p>
+                <form class="wish-form" id="wish-form">
+                  <textarea
+                    class="wish-field"
+                    id="wish-input"
+                    maxlength="500"
+                    placeholder="Tuliskan cerita, doa, atau harapanmu hari ini..."
+                    required></textarea>
+                  <div class="wish-link-tools">
+                    <button type="button" class="link-chip-btn" id="insert-link-btn">🔗 Sisipkan tautan</button>
+                  </div>
+                  <div class="link-insert-row" id="link-insert-row" hidden>
+                    <input type="text" class="link-insert-field" id="link-label-input" placeholder="Teks tampilan, mis. Lagu untukmu" maxlength="60">
+                    <input type="url" class="link-insert-field" id="link-url-input" placeholder="https://...">
+                    <div class="link-insert-actions">
+                      <button type="button" class="btn-secondary" id="link-insert-confirm">Tambahkan</button>
+                      <button type="button" class="link-btn" id="link-insert-cancel">Batal</button>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn-primary">Kirim Harapan</button>
+                </form>
+              </div>
+
+            </div>
           </div>
         </div>
       </div>
@@ -113,6 +142,7 @@
   </section>
 
   <script src="js/flowers-data.js"></script>
+  <script src="js/ambient-bg.js"></script>
   <script src="js/shapes.js"></script>
   <script src="js/board.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
