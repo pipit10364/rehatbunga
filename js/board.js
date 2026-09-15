@@ -175,7 +175,13 @@
         return;
       }
       slotEl.classList.remove('is-empty');
-      renderShapeInto(slotEl, shape.cells, shape.color, 18, 3);
+      // Render into a child wrapper, not slotEl itself: renderShapeInto()
+      // adds the "shape-grid" class, which carries pointer-events:none.
+      // Applying that directly to slotEl would make the slot ignore the
+      // very pointerdown events it needs for dragging.
+      const wrapper = document.createElement('div');
+      slotEl.appendChild(wrapper);
+      renderShapeInto(wrapper, shape.cells, shape.color, 18, 3);
     });
   }
 
