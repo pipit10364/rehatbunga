@@ -23,6 +23,40 @@
     'Magnolia', 'Peoni', 'Aster', 'Hortensia', 'Plum', 'Lily Lembah'
   ];
 
+  // Matches the [label](https://...) token the wish-write link tool
+  // inserts. Rendered as a small clickable chip showing only the label —
+  // like an Instagram Story link sticker, or a spreadsheet cell whose
+  // display text differs from the URL it links to.
+  const LINK_TOKEN = /\[([^\[\]]{1,60})\]\((https?:\/\/[^\s()]+)\)/g;
+
+  function renderWishText(container, text){
+    LINK_TOKEN.lastIndex = 0;
+    let lastIndex = 0;
+    let match;
+    while ((match = LINK_TOKEN.exec(text))){
+      if (match.index > lastIndex){
+        container.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+      const a = document.createElement('a');
+      a.href = match[2];
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer nofollow';
+      a.className = 'wish-link-chip';
+      const icon = document.createElement('span');
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = '🔗';
+      const label = document.createElement('span');
+      label.textContent = match[1];
+      a.appendChild(icon);
+      a.appendChild(label);
+      container.appendChild(a);
+      lastIndex = LINK_TOKEN.lastIndex;
+    }
+    if (lastIndex < text.length){
+      container.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+  }
+
   const REACTIONS = [
     { key: 'rasa', emoji: '🌸', label: 'Aku merasakannya juga' },
     { key: 'peluk', emoji: '🤍', label: 'Kirim pelukan' },
@@ -112,7 +146,7 @@
 
       const text = document.createElement('p');
       text.className = 'sticky-text';
-      text.textContent = wish.text;
+      renderWishText(text, wish.text);
       card.appendChild(text);
 
       const reactionsRow = document.createElement('div');

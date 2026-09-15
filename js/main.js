@@ -27,8 +27,17 @@
     flowerName: document.getElementById('flower-name'),
     flowerMeaning: document.getElementById('flower-meaning'),
     flowerMessage: document.getElementById('flower-message'),
+    flipBackPanels: document.getElementById('flip-back-panels'),
+    goWriteBtn: document.getElementById('go-write-btn'),
+    backToMessageBtn: document.getElementById('back-to-message-btn'),
     wishForm: document.getElementById('wish-form'),
     wishInput: document.getElementById('wish-input'),
+    insertLinkBtn: document.getElementById('insert-link-btn'),
+    linkInsertRow: document.getElementById('link-insert-row'),
+    linkLabelInput: document.getElementById('link-label-input'),
+    linkUrlInput: document.getElementById('link-url-input'),
+    linkInsertConfirm: document.getElementById('link-insert-confirm'),
+    linkInsertCancel: document.getElementById('link-insert-cancel'),
 
     wallView: document.getElementById('wall-view'),
     wallMasonry: document.getElementById('wall-masonry'),
@@ -78,7 +87,10 @@
     currentFlower = pickRandomFlower();
     setupBoardImage(currentFlower);
     el.flipCard.classList.remove('is-flipped');
+    el.flipBackPanels.classList.remove('is-writing');
     el.wishInput.value = '';
+    el.linkInsertRow.hidden = true;
+    if (window.AmbientBg) window.AmbientBg.hide();
 
     window.Board.init(el.boardGrid, el.tray, {
       onProgress: updateProgressUI,
@@ -94,6 +106,7 @@
     el.flowerMeaning.textContent = currentFlower.meaning;
     el.flowerMessage.textContent = currentFlower.message;
     el.gameView.hidden = true;
+    if (window.AmbientBg) window.AmbientBg.show();
     showOverlay(el.victoryOverlay);
   }
 
@@ -130,7 +143,49 @@
 
   el.flipBtn.addEventListener('click', () => {
     el.flipCard.classList.add('is-flipped');
-    setTimeout(() => el.wishInput.focus(), 500);
+  });
+
+  // Mobile: "Tulis Harapanmu" slides to a separate writing room.
+  // Desktop: both rooms are already shown side by side (see CSS), and
+  // these buttons are hidden there, so this just quietly does nothing.
+  el.goWriteBtn.addEventListener('click', () => {
+    el.flipBackPanels.classList.add('is-writing');
+    setTimeout(() => el.wishInput.focus(), 400);
+  });
+
+  el.backToMessageBtn.addEventListener('click', () => {
+    el.flipBackPanels.classList.remove('is-writing');
+  });
+
+  el.insertLinkBtn.addEventListener('click', () => {
+    el.linkInsertRow.hidden = !el.linkInsertRow.hidden;
+    if (!el.linkInsertRow.hidden) el.linkLabelInput.focus();
+  });
+
+  el.linkInsertCancel.addEventListener('click', () => {
+    el.linkInsertRow.hidden = true;
+    el.linkLabelInput.value = '';
+    el.linkUrlInput.value = '';
+  });
+
+  el.linkInsertConfirm.addEventListener('click', () => {
+    const label = el.linkLabelInput.value.trim();
+    let url = el.linkUrlInput.value.trim();
+    if (!label || !url) return;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    // Stored as [label](url) — the wish wall renders this as a small
+    // clickable chip showing just the label, not the raw link.
+    const token = `[${label}](${url})`;
+    const ta = el.wishInput;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    ta.value = ta.value.slice(0, start) + token + ta.value.slice(end);
+    ta.focus();
+    ta.selectionStart = ta.selectionEnd = start + token.length;
+
+    el.linkInsertRow.hidden = true;
+    el.linkLabelInput.value = '';
+    el.linkUrlInput.value = '';
   });
 
   el.wishForm.addEventListener('submit', (e) => {
@@ -158,6 +213,7 @@
 
   // ---------- boot ----------
 
+  if (window.AmbientBg) window.AmbientBg.show();
   showOverlay(el.introOverlay);
 
   loadFlowersData().then(data => {
