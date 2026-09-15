@@ -110,17 +110,17 @@ button{ font-family: inherit; }
   margin: 0 auto;
 }
 
-/* Desktop: title+progress on the right, board centered, piece tray on
-   the left — avoids the vertical scroll the stacked mobile layout would
+/* Desktop: title+progress on the left, board centered, piece tray on
+   the right — avoids the vertical scroll the stacked mobile layout would
    force on a wide, short viewport. */
 @media (min-width: 880px){
   .app-shell{
     max-width: 1080px;
     display: grid;
-    grid-template-columns: 200px minmax(380px, 560px) 260px;
+    grid-template-columns: 260px minmax(380px, 560px) 200px;
     grid-template-areas:
-      "tray board sidepanel"
-      "tray board sidepanel";
+      "sidepanel board tray"
+      "sidepanel board tray";
     align-items: start;
     gap: 28px;
   }
@@ -571,12 +571,20 @@ button{ font-family: inherit; }
   margin: 0 0 10px;
 }
 
-.flip-back p.flower-message{
+.flower-message{
+  flex: 1;
+  margin-bottom: 16px;
+}
+
+.flower-message p{
   font-size: 15px;
   line-height: 1.75;
   color: var(--ink);
-  margin: 0 0 16px;
-  flex: 1;
+  margin: 0 0 14px;
+}
+
+.flower-message p:last-child{
+  margin-bottom: 0;
 }
 
 /* Two rooms: the flower message, and a separate room to write in.
@@ -700,6 +708,10 @@ button{ font-family: inherit; }
 
   .panel{ padding: 30px 34px; }
 
+  .panel-message{
+    justify-content: center;
+  }
+
   .panel-write{
     border-left: 1px solid var(--line);
   }
@@ -718,7 +730,8 @@ button{ font-family: inherit; }
   font-family: inherit;
   font-size: 14px;
   resize: none;
-  min-height: 78px;
+  flex: 1;
+  min-height: 140px;
   color: var(--ink);
   background: var(--surface-2);
 }
@@ -728,7 +741,8 @@ button{ font-family: inherit; }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: auto;
+  flex: 1;
+  margin-top: 14px;
 }
 
 .wish-form .btn-primary{ align-self: flex-end; }
