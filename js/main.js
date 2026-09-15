@@ -145,6 +145,8 @@
 
   // ---------- boot ----------
 
+  showOverlay(el.introOverlay);
+
   loadFlowersData().then(data => {
     flowersData = data;
   });
