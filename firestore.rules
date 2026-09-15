@@ -17,16 +17,44 @@ service cloud.firestore {
                     && request.resource.data.text.size() > 0
                     && request.resource.data.text.size() <= 500
                     && request.resource.data.handle is string
+                    && request.resource.data.handle.size() <= 60
+                    && request.resource.data.flowerName is string
+                    && request.resource.data.flowerName.size() <= 60
+                    && request.resource.data.reactions.keys().hasOnly(['rasa', 'peluk', 'semangat'])
                     && request.resource.data.reactions.rasa == 0
                     && request.resource.data.reactions.peluk == 0
                     && request.resource.data.reactions.semangat == 0;
 
-      // Update HANYA boleh buat naik/turunin satu field reaction, ga
-      // boleh ubah text/handle/flowerName/ts, dan ga boleh dihapus.
-      allow update: if request.resource.data.diff(resource.data).affectedKeys()
-                        .hasOnly(['reactions'])
+      // Update HANYA boleh buat naik/turunin SATU reaction sebesar
+      // PERSIS 1 per panggilan (bukan sembarang angka), field lain
+      // (handle/text/flowerName/reactions lainnya) harus tetap sama,
+      // dan ga boleh sampai minus.
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
                     && request.resource.data.handle == resource.data.handle
-                    && request.resource.data.text == resource.data.text;
+                    && request.resource.data.text == resource.data.text
+                    && request.resource.data.flowerName == resource.data.flowerName
+                    && request.resource.data.reactions.keys().hasOnly(['rasa', 'peluk', 'semangat'])
+                    && request.resource.data.reactions.rasa >= 0
+                    && request.resource.data.reactions.peluk >= 0
+                    && request.resource.data.reactions.semangat >= 0
+                    && (
+                      (
+                        (request.resource.data.reactions.rasa == resource.data.reactions.rasa + 1
+                          || request.resource.data.reactions.rasa == resource.data.reactions.rasa - 1)
+                        && request.resource.data.reactions.peluk == resource.data.reactions.peluk
+                        && request.resource.data.reactions.semangat == resource.data.reactions.semangat
+                      ) || (
+                        (request.resource.data.reactions.peluk == resource.data.reactions.peluk + 1
+                          || request.resource.data.reactions.peluk == resource.data.reactions.peluk - 1)
+                        && request.resource.data.reactions.rasa == resource.data.reactions.rasa
+                        && request.resource.data.reactions.semangat == resource.data.reactions.semangat
+                      ) || (
+                        (request.resource.data.reactions.semangat == resource.data.reactions.semangat + 1
+                          || request.resource.data.reactions.semangat == resource.data.reactions.semangat - 1)
+                        && request.resource.data.reactions.rasa == resource.data.reactions.rasa
+                        && request.resource.data.reactions.peluk == resource.data.reactions.peluk
+                      )
+                    );
 
       allow delete: if false;
     }
