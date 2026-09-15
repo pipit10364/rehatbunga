@@ -99,12 +99,21 @@
     });
   }
 
+  function renderMessageParagraphs(container, text){
+    container.innerHTML = '';
+    text.split(/\n+/).map(s => s.trim()).filter(Boolean).forEach(paragraph => {
+      const p = document.createElement('p');
+      p.textContent = paragraph;
+      container.appendChild(p);
+    });
+  }
+
   function showVictory(){
     el.flowerPhoto.src = currentFlower.image;
     el.flowerPhoto.alt = `Bunga ${currentFlower.name}`;
     el.flowerName.textContent = currentFlower.name;
     el.flowerMeaning.textContent = currentFlower.meaning;
-    el.flowerMessage.textContent = currentFlower.message;
+    renderMessageParagraphs(el.flowerMessage, currentFlower.message);
     el.gameView.hidden = true;
     if (window.AmbientBg) window.AmbientBg.show();
     showOverlay(el.victoryOverlay);
