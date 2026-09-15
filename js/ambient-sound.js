@@ -48,23 +48,28 @@
     src.buffer = makeWaterBuffer();
     src.loop = true;
 
+    // Lowpass, not bandpass: a bandpass here was cutting away the low
+    // rumble the noise buffer was built to have and leaving only a
+    // thin slice around 900Hz, which read as hiss/static rather than
+    // a soft "shhh". Lowpass keeps the gentle low end intact.
     const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 900;
-    filter.Q.value = 0.6;
+    filter.type = 'lowpass';
+    filter.frequency.value = 650;
+    filter.Q.value = 0.3;
 
-    // Slowly drift the filter so the water isn't a static drone —
-    // real running water swells and dips.
+    // Slowly drift the cutoff so the water isn't a static drone — real
+    // running water swells and dips — but keep the range small so it
+    // doesn't sweep into a whistle.
     const lfo = ctx.createOscillator();
-    lfo.frequency.value = 0.07;
+    lfo.frequency.value = 0.035;
     const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 260;
+    lfoGain.gain.value = 110;
     lfo.connect(lfoGain);
     lfoGain.connect(filter.frequency);
     lfo.start();
 
     const waterGain = ctx.createGain();
-    waterGain.gain.value = 0.55;
+    waterGain.gain.value = 0.32;
 
     src.connect(filter);
     filter.connect(waterGain);
@@ -83,38 +88,48 @@
   // ---------- soft bird chirps ----------
 
   function playChirp(){
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    osc.type = 'sine';
-    const base = 1800 + Math.random() * 1400;
-    osc.frequency.setValueAtTime(base, now);
-    osc.frequency.exponentialRampToValueAtTime(base * (0.75 + Math.random() * 0.4), now + 0.09);
+    // A soft 1-2 note trill with a slow attack and a long tail, in a
+    // lower register than before. The old version had an instant
+    // 15ms attack and a sharp downward pitch snap at 1800-3200Hz —
+    // acoustically that's the same shape as a notification beep, which
+    // is exactly why it read as an alert instead of a bird. This
+    // version fades in gently and bends pitch slowly.
+    const noteCount = 1 + Math.floor(Math.random() * 2);
+    const baseFreq = 1500 + Math.random() * 900;
+    let t = ctx.currentTime;
 
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(0.05, now + 0.015);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    for (let i = 0; i < noteCount; i++){
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      const freq = i === 0 ? baseFreq : baseFreq * (0.85 + Math.random() * 0.3);
+      osc.frequency.setValueAtTime(freq, t);
+      osc.frequency.linearRampToValueAtTime(freq * (0.94 + Math.random() * 0.08), t + 0.2);
 
-    osc.connect(g);
-    if (ctx.createStereoPanner){
-      const pan = ctx.createStereoPanner();
-      pan.pan.value = Math.random() * 1.6 - 0.8;
-      g.connect(pan);
-      pan.connect(masterGain);
-    } else {
-      g.connect(masterGain);
-    }
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.028, t + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
 
-    osc.start(now);
-    osc.stop(now + 0.16);
+      osc.connect(g);
+      if (ctx.createStereoPanner){
+        const pan = ctx.createStereoPanner();
+        pan.pan.value = Math.random() * 1.2 - 0.6;
+        g.connect(pan);
+        pan.connect(masterGain);
+      } else {
+        g.connect(masterGain);
+      }
 
-    if (Math.random() < 0.5){
-      setTimeout(() => { if (isOn) playChirp(); }, 90 + Math.random() * 60);
+      osc.start(t);
+      osc.stop(t + 0.34);
+      t += 0.22 + Math.random() * 0.08;
     }
   }
 
   function scheduleNextChirp(){
-    const delay = 3500 + Math.random() * 7000;
+    // Spaced further apart than before — a bird call every few seconds
+    // felt busy/alert-like; real ambience leaves a lot of silence.
+    const delay = 6000 + Math.random() * 9000;
     birdTimer = setTimeout(() => {
       if (isOn) playChirp();
       scheduleNextChirp();
@@ -140,7 +155,7 @@
     if (ctx.state === 'suspended') ctx.resume();
     if (!waterSrc) startWater();
     if (!birdTimer) scheduleNextChirp();
-    fadeMasterTo(0.5, 1.2);
+    fadeMasterTo(0.42, 1.4);
     isOn = true;
   }
 
