@@ -3,7 +3,7 @@
 Game Block Blast 8x8 bertema pastel: bersihkan baris/kolom untuk perlahan
 menyingkap gambar bunga di belakang papan. Saat progres 100%, muncul kartu
 bunga (flip) berisi makna dan pesan, lalu pemain bisa menuliskan harapan dan
-melihatnya di "Tembok Harapan".
+melihatnya di "Taman Harapan".
 
 ## Cara menjalankan
 
@@ -28,7 +28,7 @@ index.html
 css/style.css          -> semua styling (token warna pastel, board, modal, wall)
 js/shapes.js            -> definisi bentuk block (1-5 kotak) + palet warna
 js/board.js              -> logika papan, drag-and-drop, clear baris/kolom, progres
-js/wishwall.js           -> render Tembok Harapan dari Firestore (realtime)
+js/wishwall.js           -> render Taman Harapan dari Firestore (realtime)
 js/firebase-config.js     -> config Firebase (isi dengan config project kamu)
 js/flowers-data.js        -> salinan cadangan data bunga (untuk mode file://)
 js/main.js                -> penghubung semua bagian + alur layar

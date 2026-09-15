@@ -15,10 +15,19 @@
   </div>
 
   <!-- AMBIENT SOUND TOGGLE (fixed, visible on every screen) -->
-  <button class="sound-toggle-btn" id="sound-toggle-btn" type="button" aria-pressed="false">
-    <span class="sound-toggle-icon" aria-hidden="true">🔈</span>
-    <span class="sound-toggle-label">Suara alam</span>
-  </button>
+  <div class="sound-control" id="sound-control">
+    <button class="sound-toggle-btn" id="sound-toggle-btn" type="button" aria-pressed="false">
+      <span class="sound-toggle-icon" aria-hidden="true">🔈</span>
+      <span class="sound-toggle-label">Suara alam</span>
+    </button>
+    <input
+      type="range"
+      class="sound-volume-slider"
+      id="sound-volume-slider"
+      min="0" max="100" value="45" step="5"
+      aria-label="Volume suara alam"
+      hidden>
+  </div>
 
   <!-- INTRO MODAL -->
   <div class="overlay" id="intro-overlay">
@@ -127,6 +136,7 @@
                     </div>
                   </div>
                   <button type="submit" class="btn-primary">Kirim Harapan</button>
+                  <button type="button" class="link-btn panel-skip-btn" id="skip-to-wall-btn">Belum siap menulis, lewati dulu</button>
                 </form>
               </div>
 
@@ -140,7 +150,7 @@
   <!-- WISH WALL VIEW -->
   <section class="wall-view" id="wall-view" hidden>
     <div class="wall-header">
-      <h1>Tembok Harapan</h1>
+      <h1>Taman Harapan</h1>
       <p>Setiap catatan di sini datang dari seseorang yang, sama sepertimu, sedang mencoba bertahan hari ini. Kamu tidak sendirian.</p>
     </div>
     <div class="wall-masonry" id="wall-masonry"></div>
