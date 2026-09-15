@@ -37,14 +37,20 @@
 
   <!-- GAME VIEW -->
   <main class="app-shell" id="game-view" hidden>
-    <header class="game-header">
-      <h1 class="game-title">Ruang Rehat Bunga</h1>
-      <p class="game-subtitle">Susun kepingan, penuhi baris, biarkan bunga perlahan mekar.</p>
-      <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
-        <div class="progress-fill" id="progress-fill"></div>
+    <div class="side-panel">
+      <header class="game-header">
+        <h1 class="game-title">Ruang Rehat Bunga</h1>
+        <p class="game-subtitle">Susun kepingan, penuhi baris, biarkan bunga perlahan mekar.</p>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <p class="progress-label" id="progress-label">Bunga mulai mekar&hellip; 0%</p>
+      </header>
+
+      <div class="footer-row">
+        <button class="link-btn" id="restart-btn">Mulai ulang papan</button>
       </div>
-      <p class="progress-label" id="progress-label">Bunga mulai mekar&hellip; 0%</p>
-    </header>
+    </div>
 
     <section class="board-wrap">
       <div class="board-image-layer" id="board-image-layer"></div>
@@ -57,10 +63,6 @@
       <div class="tray-slot" data-slot="1" tabindex="0"></div>
       <div class="tray-slot" data-slot="2" tabindex="0"></div>
     </section>
-
-    <div class="footer-row">
-      <button class="link-btn" id="restart-btn">Mulai ulang papan</button>
-    </div>
   </main>
 
   <!-- STUCK / GENTLE RESET MODAL -->
