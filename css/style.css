@@ -179,11 +179,17 @@ button{ font-family: inherit; }
 
 /* ---------- ambient sound toggle ---------- */
 
-.sound-toggle-btn{
+.sound-control{
   position: fixed;
   top: 16px;
   right: 16px;
   z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sound-toggle-btn{
   display: flex;
   align-items: center;
   gap: 6px;
@@ -204,9 +210,18 @@ button{ font-family: inherit; }
   border-color: var(--moss);
   background: rgba(251, 249, 242, 0.95);
 }
+
+.sound-volume-slider{
+  width: 90px;
+  accent-color: var(--moss-deep);
+  cursor: pointer;
+}
+
 @media (max-width: 640px){
-  .sound-toggle-btn{ top: 10px; right: 10px; padding: 7px 10px; font-size: 12px; }
+  .sound-control{ top: 10px; right: 10px; }
+  .sound-toggle-btn{ padding: 7px 10px; font-size: 12px; }
   .sound-toggle-label{ display: none; }
+  .sound-volume-slider{ width: 64px; }
 }
 
 /* ---------- overlays / modals ---------- */
@@ -647,6 +662,12 @@ button{ font-family: inherit; }
 .panel-write-btn{
   align-self: flex-start;
   margin-top: auto;
+}
+
+.panel-skip-btn{
+  align-self: center;
+  margin-top: 10px;
+  font-size: 12px;
 }
 
 .panel-back-btn{
