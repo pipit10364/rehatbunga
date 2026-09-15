@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Ruang Rehat Bunga</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- INTRO MODAL -->
+  <div class="overlay" id="intro-overlay">
+    <div class="modal-card">
+      <p class="modal-eyebrow">sebelum mulai</p>
+      <h2>Selamat datang di ruang rehat kecil ini</h2>
+      <p>
+        Kita tahu, keadaan di luar sana&mdash;bahkan mungkin di dalam diri kita sendiri&mdash;sedang
+        tidak baik-baik saja. Berita musibah, rasa cemas, kelangkaan kebutuhan dasar, hingga
+        masalah pribadi yang terus menghampiri. Semua lelah. Semua capek.
+      </p>
+      <p>
+        Meski tak banyak yang bisa kita ubah sekaligus, mari berhenti sejenak. Berpegangan
+        tangan dan saling menguatkan. Selesaikan permainan kecil ini, buka pesan dari bunga,
+        dan tuliskan harapan terbaikmu.
+      </p>
+      <div class="modal-actions">
+        <button class="btn-primary" id="intro-start-btn">Mulai Rehat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME VIEW -->
+  <main class="app-shell" id="game-view" hidden>
+    <header class="game-header">
+      <h1 class="game-title">Ruang Rehat Bunga</h1>
+      <p class="game-subtitle">Susun kepingan, penuhi baris, biarkan bunga perlahan mekar.</p>
+      <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <p class="progress-label" id="progress-label">Bunga mulai mekar&hellip; 0%</p>
+    </header>
+
+    <section class="board-wrap">
+      <div class="board-image-layer" id="board-image-layer"></div>
+      <div class="board-image-veil" id="board-image-veil"></div>
+      <div class="board-grid" id="board-grid" aria-label="Papan permainan 8 kali 8"></div>
+    </section>
+
+    <section class="tray" id="tray" aria-label="Kepingan yang bisa diseret ke papan">
+      <div class="tray-slot" data-slot="0" tabindex="0"></div>
+      <div class="tray-slot" data-slot="1" tabindex="0"></div>
+      <div class="tray-slot" data-slot="2" tabindex="0"></div>
+    </section>
+
+    <div class="footer-row">
+      <button class="link-btn" id="restart-btn">Mulai ulang papan</button>
+    </div>
+  </main>
+
+  <!-- STUCK / GENTLE RESET MODAL -->
+  <div class="overlay" id="stuck-overlay" hidden>
+    <div class="modal-card">
+      <p class="modal-eyebrow">sebentar</p>
+      <h2>Papannya sudah penuh, tak apa</h2>
+      <p>Tidak semua kepingan harus muat sekaligus. Mari kita rapikan papannya dan coba lagi&mdash;bunga yang sudah mekar tidak akan hilang.</p>
+      <div class="modal-actions">
+        <button class="btn-primary" id="stuck-retry-btn">Coba Lagi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VICTORY MODAL -->
+  <div class="overlay victory-overlay" id="victory-overlay" hidden>
+    <div class="modal-card">
+      <div class="flip-card" id="flip-card">
+        <div class="flip-card-inner">
+          <div class="flip-face flip-front">
+            <img class="flower-photo" id="flower-photo" src="" alt="">
+            <div class="flip-front-body">
+              <h2 class="flower-name" id="flower-name"></h2>
+              <p class="flower-meaning" id="flower-meaning"></p>
+              <button class="flip-hint" id="flip-btn">Buka pesan dari bunga</button>
+            </div>
+          </div>
+          <div class="flip-face flip-back">
+            <p class="flip-back-eyebrow">pesan untukmu</p>
+            <p class="flower-message" id="flower-message"></p>
+            <form class="wish-form" id="wish-form">
+              <textarea
+                class="wish-field"
+                id="wish-input"
+                maxlength="280"
+                placeholder="Tuliskan cerita, doa, atau harapanmu hari ini..."
+                required></textarea>
+              <button type="submit" class="btn-primary">Kirim Harapan</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WISH WALL VIEW -->
+  <section class="wall-view" id="wall-view" hidden>
+    <div class="wall-header">
+      <h1>Tembok Harapan</h1>
+      <p>Setiap catatan di sini datang dari seseorang yang, sama sepertimu, sedang mencoba bertahan hari ini. Kamu tidak sendirian.</p>
+    </div>
+    <div class="wall-masonry" id="wall-masonry"></div>
+    <div class="wall-footer">
+      <button class="btn-primary" id="play-again-btn">Main Lagi</button>
+    </div>
+  </section>
+
+  <script src="js/flowers-data.js"></script>
+  <script src="js/shapes.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/wishwall.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
