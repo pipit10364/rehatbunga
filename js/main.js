@@ -1,6 +1,6 @@
 (function(){
 
-  let flowersData = [];
+  let flowersData = window.FLOWERS_FALLBACK || [];
   let currentFlower = null;
 
   const el = {
@@ -41,7 +41,10 @@
 
     wallView: document.getElementById('wall-view'),
     wallMasonry: document.getElementById('wall-masonry'),
-    playAgainBtn: document.getElementById('play-again-btn')
+    playAgainBtn: document.getElementById('play-again-btn'),
+
+    soundToggleBtn: document.getElementById('sound-toggle-btn'),
+    soundToggleIcon: document.querySelector('#sound-toggle-btn .sound-toggle-icon')
   };
 
   function loadFlowersData(){
@@ -49,6 +52,11 @@
       .then(res => { if (!res.ok) throw new Error('bad response'); return res.json(); })
       .catch(() => window.FLOWERS_FALLBACK);
   }
+
+  // Start with the bundled fallback synchronously (flowers-data.js loads
+  // before this file), so the "Mulai Rehat" button always has data ready
+  // even if the fetch() below is still in flight or fails. Upgrades to
+  // the fetched copy once it resolves.
 
   function pickRandomFlower(){
     return flowersData[Math.floor(Math.random() * flowersData.length)];
@@ -220,13 +228,21 @@
 
   el.playAgainBtn.addEventListener('click', resetToIntroFlow);
 
+  el.soundToggleBtn.addEventListener('click', () => {
+    if (!window.AmbientSound) return;
+    const on = window.AmbientSound.toggle();
+    el.soundToggleBtn.classList.toggle('is-active', on);
+    el.soundToggleBtn.setAttribute('aria-pressed', String(on));
+    el.soundToggleIcon.textContent = on ? '🔊' : '🔈';
+  });
+
   // ---------- boot ----------
 
   if (window.AmbientBg) window.AmbientBg.show();
   showOverlay(el.introOverlay);
 
   loadFlowersData().then(data => {
-    flowersData = data;
+    if (data && data.length) flowersData = data;
   });
 
 })();
