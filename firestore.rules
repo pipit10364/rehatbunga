@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /wishes/{wishId} {
+
+      // Semua orang boleh baca wall.
+      allow read: if true;
+
+      // Siapa aja boleh nulis wish baru, TAPI harus sesuai bentuk yang
+      // diharapkan: field lengkap, text bukan string kosong dan ga
+      // kepanjangan, reaction mulai dari 0.
+      allow create: if request.resource.data.keys().hasOnly(
+                        ['handle', 'text', 'flowerName', 'reactions', 'ts']
+                      )
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 500
+                    && request.resource.data.handle is string
+                    && request.resource.data.reactions.rasa == 0
+                    && request.resource.data.reactions.peluk == 0
+                    && request.resource.data.reactions.semangat == 0;
+
+      // Update HANYA boleh buat naik/turunin satu field reaction, ga
+      // boleh ubah text/handle/flowerName/ts, dan ga boleh dihapus.
+      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['reactions'])
+                    && request.resource.data.handle == resource.data.handle
+                    && request.resource.data.text == resource.data.text;
+
+      allow delete: if false;
+    }
+  }
+}
