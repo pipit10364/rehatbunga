@@ -32,6 +32,7 @@
     backToMessageBtn: document.getElementById('back-to-message-btn'),
     wishForm: document.getElementById('wish-form'),
     wishInput: document.getElementById('wish-input'),
+    skipToWallBtn: document.getElementById('skip-to-wall-btn'),
     insertLinkBtn: document.getElementById('insert-link-btn'),
     linkInsertRow: document.getElementById('link-insert-row'),
     linkLabelInput: document.getElementById('link-label-input'),
@@ -44,7 +45,8 @@
     playAgainBtn: document.getElementById('play-again-btn'),
 
     soundToggleBtn: document.getElementById('sound-toggle-btn'),
-    soundToggleIcon: document.querySelector('#sound-toggle-btn .sound-toggle-icon')
+    soundToggleIcon: document.querySelector('#sound-toggle-btn .sound-toggle-icon'),
+    soundVolumeSlider: document.getElementById('sound-volume-slider')
   };
 
   function loadFlowersData(){
@@ -170,6 +172,12 @@
     setTimeout(() => el.wishInput.focus(), 400);
   });
 
+  // For anyone who opens this in a state where writing feels like too
+  // much right now — skips straight to the wall, no wish required.
+  el.skipToWallBtn.addEventListener('click', () => {
+    goToWishWall();
+  });
+
   el.backToMessageBtn.addEventListener('click', () => {
     el.flipBackPanels.classList.remove('is-writing');
   });
@@ -234,6 +242,12 @@
     el.soundToggleBtn.classList.toggle('is-active', on);
     el.soundToggleBtn.setAttribute('aria-pressed', String(on));
     el.soundToggleIcon.textContent = on ? '🔊' : '🔈';
+    el.soundVolumeSlider.hidden = !on;
+  });
+
+  el.soundVolumeSlider.addEventListener('input', () => {
+    if (!window.AmbientSound) return;
+    window.AmbientSound.setVolume(Number(el.soundVolumeSlider.value) / 100);
   });
 
   // ---------- boot ----------

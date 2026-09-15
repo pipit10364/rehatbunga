@@ -1,5 +1,5 @@
 /**
- * "Tembok Harapan" wish wall: stores wishes in Firestore (collection
+ * "Taman Harapan" wish wall: stores wishes in Firestore (collection
  * "wishes") so everyone playing the game sees the same shared wall in
  * realtime, assigns a random anonymous flower-themed handle, and renders
  * a masonry sticky-note board with lightweight reactions.
@@ -191,7 +191,7 @@
         container.innerHTML = '';
         const err = document.createElement('p');
         err.className = 'wall-empty';
-        err.textContent = 'Tembok harapan lagi ga bisa dimuat. Coba cek koneksimu ya.';
+        err.textContent = 'Taman harapan lagi ga bisa dimuat. Coba cek koneksimu ya.';
         container.appendChild(err);
       });
   }
