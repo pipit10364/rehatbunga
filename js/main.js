@@ -137,8 +137,21 @@
     e.preventDefault();
     const text = el.wishInput.value.trim();
     if (!text) return;
-    window.WishWall.addWish(text, currentFlower.name);
-    goToWishWall();
+
+    const submitBtn = el.wishForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    const originalLabel = submitBtn.textContent;
+    submitBtn.textContent = 'Mengirim…';
+
+    window.WishWall.addWish(text, currentFlower.name)
+      .then(() => {
+        goToWishWall();
+      })
+      .catch(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalLabel;
+        alert('Harapanmu belum berhasil terkirim. Coba cek koneksimu, lalu kirim ulang ya.');
+      });
   });
 
   el.playAgainBtn.addEventListener('click', resetToIntroFlow);
