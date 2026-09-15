@@ -16,6 +16,7 @@
 
   let boardGridEl, trayEl;
   let callbacks = {};
+  let trayEventsWired = false;
 
   function emptyGrid(){
     const g = [];
@@ -294,6 +295,28 @@
     updatePreview(e.clientX, e.clientY);
   }
 
+  function commitPlacement(slotIndex, shape, originR, originC){
+    placeShapeAt(shape, originR, originC);
+    trayShapes[slotIndex] = null;
+    renderTray();
+    afterPlacementResolve();
+
+    if (trayShapes.every(s => s === null)){
+      setTimeout(spawnNewTray, CLEAR_ANIM_MS + 60);
+    } else {
+      checkStuckState();
+    }
+  }
+
+  function findFirstFit(cells){
+    for (let r = 0; r < SIZE; r++){
+      for (let c = 0; c < SIZE; c++){
+        if (canPlace(cells, r, c)) return { r, c };
+      }
+    }
+    return null;
+  }
+
   function onDragEnd(e){
     if (!dragState) return;
     const { slotIndex, shape, ghost, valid, originR, originC } = dragState;
@@ -309,16 +332,7 @@
     dragState = null;
 
     if (valid){
-      placeShapeAt(shape, originR, originC);
-      trayShapes[slotIndex] = null;
-      renderTray();
-      afterPlacementResolve();
-
-      if (trayShapes.every(s => s === null)){
-        setTimeout(spawnNewTray, CLEAR_ANIM_MS + 60);
-      } else {
-        checkStuckState();
-      }
+      commitPlacement(slotIndex, shape, originR, originC);
     }
   }
 
@@ -330,6 +344,22 @@
         e.preventDefault();
         startDrag(idx, e);
       });
+
+      // Keyboard fallback for anyone who can't drag with a pointer: Enter
+      // or Space drops the focused piece into the first open spot found
+      // scanning top-left to bottom-right. Not a full keyboard-driven
+      // placement UI, but it keeps the game playable via Tab + Enter
+      // rather than being pointer-only.
+      slotEl.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        const idx = Number(slotEl.dataset.slot);
+        const shape = trayShapes[idx];
+        if (!shape) return;
+        const spot = findFirstFit(shape.cells);
+        if (!spot) return;
+        commitPlacement(idx, shape, spot.r, spot.c);
+      });
     });
   }
 
@@ -340,8 +370,15 @@
       boardGridEl = boardGridElement;
       trayEl = trayElement;
       callbacks = cbs || {};
-      buildBoardDom();
-      wireTrayEvents();
+      // wireTrayEvents() attaches fresh closures to the (persistent, never
+      // recreated) tray-slot DOM nodes. Board.init() runs again every time
+      // "Main Lagi" starts a new session, so without this guard the same
+      // slots would pick up one more duplicate pointerdown listener per
+      // replay — each drag then firing multiple times.
+      if (!trayEventsWired){
+        wireTrayEvents();
+        trayEventsWired = true;
+      }
       this.newGame();
     },
 
