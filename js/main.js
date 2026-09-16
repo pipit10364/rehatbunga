@@ -6,6 +6,7 @@
   const el = {
     introOverlay: document.getElementById('intro-overlay'),
     introStartBtn: document.getElementById('intro-start-btn'),
+    introSkipToWallBtn: document.getElementById('intro-skip-to-wall-btn'),
 
     gameView: document.getElementById('game-view'),
     boardGrid: document.getElementById('board-grid'),
@@ -42,7 +43,19 @@
 
     wallView: document.getElementById('wall-view'),
     wallMasonry: document.getElementById('wall-masonry'),
+    wallWriteBtn: document.getElementById('wall-write-btn'),
     playAgainBtn: document.getElementById('play-again-btn'),
+
+    quickWriteOverlay: document.getElementById('quick-write-overlay'),
+    quickWishForm: document.getElementById('quick-wish-form'),
+    quickWishInput: document.getElementById('quick-wish-input'),
+    quickInsertLinkBtn: document.getElementById('quick-insert-link-btn'),
+    quickLinkInsertRow: document.getElementById('quick-link-insert-row'),
+    quickLinkLabelInput: document.getElementById('quick-link-label-input'),
+    quickLinkUrlInput: document.getElementById('quick-link-url-input'),
+    quickLinkInsertConfirm: document.getElementById('quick-link-insert-confirm'),
+    quickLinkInsertCancel: document.getElementById('quick-link-insert-cancel'),
+    quickWriteCancelBtn: document.getElementById('quick-write-cancel-btn'),
 
     soundToggleBtn: document.getElementById('sound-toggle-btn'),
     soundToggleIcon: document.querySelector('#sound-toggle-btn .sound-toggle-icon')
@@ -128,6 +141,69 @@
     showOverlay(el.victoryOverlay);
   }
 
+  // Wires the "sisipkan tautan" mini-tool for a given wish textarea.
+  // Shared by the flower-panel write form and the standalone quick-write
+  // form so the [label](url) insertion behavior stays identical.
+  function wireLinkInsertTool({ toggleBtn, row, labelInput, urlInput, confirmBtn, cancelBtn, textarea }){
+    toggleBtn.addEventListener('click', () => {
+      row.hidden = !row.hidden;
+      if (!row.hidden) labelInput.focus();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      row.hidden = true;
+      labelInput.value = '';
+      urlInput.value = '';
+    });
+
+    confirmBtn.addEventListener('click', () => {
+      const label = labelInput.value.trim();
+      let url = urlInput.value.trim();
+      if (!label || !url) return;
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      const token = `[${label}](${url})`;
+      const start = textarea.selectionStart ?? textarea.value.length;
+      const end = textarea.selectionEnd ?? textarea.value.length;
+      textarea.value = textarea.value.slice(0, start) + token + textarea.value.slice(end);
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + token.length;
+
+      row.hidden = true;
+      labelInput.value = '';
+      urlInput.value = '';
+    });
+  }
+
+  // Wires a wish form's submit: sends to WishWall.addWish, disables the
+  // button while sending, and calls onSuccess() once it lands.
+  // getFlowerName() is a function so the flower can be looked up at
+  // submit time (currentFlower may not exist yet when this is wired).
+  function wireWishForm({ form, input, getFlowerName, onSuccess }){
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      const originalLabel = submitBtn.textContent;
+      submitBtn.textContent = 'Mengirim…';
+
+      window.WishWall.addWish(text, getFlowerName())
+        .then(() => {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalLabel;
+          input.value = '';
+          onSuccess();
+        })
+        .catch(() => {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalLabel;
+          alert('Harapanmu belum berhasil terkirim. Coba cek koneksimu, lalu kirim ulang ya.');
+        });
+    });
+  }
+
   function goToWishWall(){
     hideOverlay(el.victoryOverlay);
     setTimeout(() => {
@@ -181,56 +257,60 @@
     el.flipBackPanels.classList.remove('is-writing');
   });
 
-  el.insertLinkBtn.addEventListener('click', () => {
-    el.linkInsertRow.hidden = !el.linkInsertRow.hidden;
-    if (!el.linkInsertRow.hidden) el.linkLabelInput.focus();
+  wireLinkInsertTool({
+    toggleBtn: el.insertLinkBtn,
+    row: el.linkInsertRow,
+    labelInput: el.linkLabelInput,
+    urlInput: el.linkUrlInput,
+    confirmBtn: el.linkInsertConfirm,
+    cancelBtn: el.linkInsertCancel,
+    textarea: el.wishInput
   });
 
-  el.linkInsertCancel.addEventListener('click', () => {
-    el.linkInsertRow.hidden = true;
-    el.linkLabelInput.value = '';
-    el.linkUrlInput.value = '';
+  wireWishForm({
+    form: el.wishForm,
+    input: el.wishInput,
+    getFlowerName: () => (currentFlower ? currentFlower.name : ''),
+    onSuccess: goToWishWall
   });
 
-  el.linkInsertConfirm.addEventListener('click', () => {
-    const label = el.linkLabelInput.value.trim();
-    let url = el.linkUrlInput.value.trim();
-    if (!label || !url) return;
-    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-    // Stored as [label](url) — the wish wall renders this as a small
-    // clickable chip showing just the label, not the raw link.
-    const token = `[${label}](${url})`;
-    const ta = el.wishInput;
-    const start = ta.selectionStart ?? ta.value.length;
-    const end = ta.selectionEnd ?? ta.value.length;
-    ta.value = ta.value.slice(0, start) + token + ta.value.slice(end);
-    ta.focus();
-    ta.selectionStart = ta.selectionEnd = start + token.length;
-
-    el.linkInsertRow.hidden = true;
-    el.linkLabelInput.value = '';
-    el.linkUrlInput.value = '';
+  // Standalone quick-write form: reachable from the intro's skip-to-wall
+  // path and from the "Tulis Pesan" button on the wall itself, so there
+  // may be no currentFlower — wishes sent here just have no flowerName.
+  wireLinkInsertTool({
+    toggleBtn: el.quickInsertLinkBtn,
+    row: el.quickLinkInsertRow,
+    labelInput: el.quickLinkLabelInput,
+    urlInput: el.quickLinkUrlInput,
+    confirmBtn: el.quickLinkInsertConfirm,
+    cancelBtn: el.quickLinkInsertCancel,
+    textarea: el.quickWishInput
   });
 
-  el.wishForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const text = el.wishInput.value.trim();
-    if (!text) return;
+  wireWishForm({
+    form: el.quickWishForm,
+    input: el.quickWishInput,
+    getFlowerName: () => '',
+    onSuccess: () => hideOverlay(el.quickWriteOverlay)
+  });
 
-    const submitBtn = el.wishForm.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    const originalLabel = submitBtn.textContent;
-    submitBtn.textContent = 'Mengirim…';
+  el.introSkipToWallBtn.addEventListener('click', () => {
+    hideOverlay(el.introOverlay);
+    setTimeout(() => {
+      el.wallView.hidden = false;
+      window.WishWall.render(el.wallMasonry);
+    }, 200);
+  });
 
-    window.WishWall.addWish(text, currentFlower.name)
-      .then(() => {
-        goToWishWall();
-      })
-      .catch(() => {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalLabel;
-        alert('Harapanmu belum berhasil terkirim. Coba cek koneksimu, lalu kirim ulang ya.');
-      });
+  el.wallWriteBtn.addEventListener('click', () => {
+    showOverlay(el.quickWriteOverlay);
+    setTimeout(() => el.quickWishInput.focus(), 400);
+  });
+
+  el.quickWriteCancelBtn.addEventListener('click', () => {
+    hideOverlay(el.quickWriteOverlay);
+    el.quickWishInput.value = '';
+    el.quickLinkInsertRow.hidden = true;
   });
 
   el.playAgainBtn.addEventListener('click', resetToIntroFlow);

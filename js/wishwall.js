@@ -65,6 +65,84 @@
 
   let unsubscribe = null;
 
+  // Search/sort/filter run entirely client-side against the already-
+  // loaded snapshot (max 200 wishes) — no extra Firestore reads needed.
+  let wallContainer = null;
+  let latestWishes = [];
+  const wallQuery = { search: '', sort: 'terbaru', flower: '' };
+
+  function sumReactions(wish){
+    const r = wish.reactions || {};
+    return (r.rasa || 0) + (r.peluk || 0) + (r.semangat || 0);
+  }
+
+  function populateFlowerFilter(selectEl){
+    if (!selectEl) return;
+    const current = selectEl.value;
+    const names = [...new Set(latestWishes.map(w => w.flowerName).filter(Boolean))].sort();
+    selectEl.innerHTML = '<option value="">Semua bunga</option>' +
+      names.map(n => `<option value="${n}">${n}</option>`).join('');
+    if (names.includes(current)) selectEl.value = current;
+  }
+
+  // Re-derives the visible list from latestWishes whenever the snapshot
+  // updates or the person changes search/sort/filter — never refetches.
+  function applyWallQuery(){
+    if (!wallContainer) return;
+    let list = latestWishes.slice();
+
+    if (wallQuery.flower){
+      list = list.filter(w => w.flowerName === wallQuery.flower);
+    }
+    const q = wallQuery.search.trim().toLowerCase();
+    if (q){
+      list = list.filter(w =>
+        (w.text || '').toLowerCase().includes(q) ||
+        (w.handle || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (wallQuery.sort === 'terlama'){
+      list.reverse(); // list is still in server order (newest first)
+    } else if (wallQuery.sort === 'reaksi'){
+      list.sort((a, b) => sumReactions(b) - sumReactions(a));
+    }
+    // 'terbaru' needs no reordering — that's the server's default order.
+
+    const emptyMessage = latestWishes.length
+      ? 'Tidak ada harapan yang cocok dengan pencarian/filter ini.'
+      : undefined;
+    renderWishes(wallContainer, list, emptyMessage);
+  }
+
+  function wireWallControls(){
+    const searchInput = document.getElementById('wall-search-input');
+    const sortSelect = document.getElementById('wall-sort-select');
+    const filterSelect = document.getElementById('wall-filter-select');
+
+    if (searchInput && !searchInput.dataset.wallWired){
+      searchInput.dataset.wallWired = '1';
+      searchInput.addEventListener('input', () => {
+        wallQuery.search = searchInput.value;
+        applyWallQuery();
+      });
+    }
+    if (sortSelect && !sortSelect.dataset.wallWired){
+      sortSelect.dataset.wallWired = '1';
+      sortSelect.addEventListener('change', () => {
+        wallQuery.sort = sortSelect.value;
+        applyWallQuery();
+      });
+    }
+    if (filterSelect && !filterSelect.dataset.wallWired){
+      filterSelect.dataset.wallWired = '1';
+      filterSelect.addEventListener('change', () => {
+        wallQuery.flower = filterSelect.value;
+        applyWallQuery();
+      });
+    }
+  }
+
   function randomHandle(){
     const p = HANDLE_PREFIXES[Math.floor(Math.random() * HANDLE_PREFIXES.length)];
     const f = HANDLE_FLOWERS[Math.floor(Math.random() * HANDLE_FLOWERS.length)];
@@ -123,14 +201,14 @@
     }).catch(() => { /* offline or blocked by rules — silently skip */ });
   }
 
-  function renderWishes(container, wishes){
+  function renderWishes(container, wishes, emptyMessage){
     const reacted = loadReactedSet();
     container.innerHTML = '';
 
     if (!wishes.length){
       const empty = document.createElement('p');
       empty.className = 'wall-empty';
-      empty.textContent = 'Belum ada harapan yang dituliskan di sini. Harapanmu bisa jadi yang pertama.';
+      empty.textContent = emptyMessage || 'Belum ada harapan yang dituliskan di sini. Harapanmu bisa jadi yang pertama.';
       container.appendChild(empty);
       return;
     }
@@ -173,6 +251,7 @@
   // keeps the wall in sync while it's visible. Safe to call multiple
   // times — a previous listener is torn down first.
   function render(container){
+    wallContainer = container;
     if (unsubscribe){ unsubscribe(); unsubscribe = null; }
 
     const loading = document.createElement('p');
@@ -181,12 +260,15 @@
     container.innerHTML = '';
     container.appendChild(loading);
 
+    wireWallControls();
+
     unsubscribe = window.db.collection('wishes')
       .orderBy('ts', 'desc')
       .limit(200)
       .onSnapshot(snapshot => {
-        const wishes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderWishes(container, wishes);
+        latestWishes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        populateFlowerFilter(document.getElementById('wall-filter-select'));
+        applyWallQuery();
       }, () => {
         container.innerHTML = '';
         const err = document.createElement('p');
