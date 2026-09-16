@@ -44,6 +44,7 @@
         dan tuliskan harapan terbaikmu.
       </p>
       <div class="modal-actions">
+        <button class="link-btn" id="intro-skip-to-wall-btn">Langsung ke Taman Harapan</button>
         <button class="btn-primary" id="intro-start-btn">Mulai Rehat</button>
       </div>
     </div>
@@ -152,11 +153,55 @@
       <h1>Taman Harapan</h1>
       <p>Setiap catatan di sini datang dari seseorang yang, sama sepertimu, sedang mencoba bertahan hari ini. Kamu tidak sendirian.</p>
     </div>
+    <div class="wall-toolbar">
+      <button type="button" class="btn-primary" id="wall-write-btn">Tulis Pesan</button>
+      <input type="search" class="wall-search-input" id="wall-search-input" placeholder="Cari kata atau nama...">
+      <select class="wall-select" id="wall-sort-select" aria-label="Urutkan harapan">
+        <option value="terbaru">Terbaru</option>
+        <option value="terlama">Terlama</option>
+        <option value="reaksi">Reaksi terbanyak</option>
+      </select>
+      <select class="wall-select" id="wall-filter-select" aria-label="Filter berdasarkan bunga">
+        <option value="">Semua bunga</option>
+      </select>
+    </div>
     <div class="wall-masonry" id="wall-masonry"></div>
     <div class="wall-footer">
       <button class="btn-primary" id="play-again-btn">Main Lagi</button>
     </div>
   </section>
+
+  <!-- QUICK WRITE MODAL: standalone wish form, not tied to a specific
+       flower. Reachable from the intro's skip-to-wall path and from the
+       wall's "Tulis Pesan" button, so wishes sent here have no
+       flowerName. -->
+  <div class="overlay" id="quick-write-overlay" hidden>
+    <div class="modal-card" id="quick-write-card">
+      <p class="modal-eyebrow">ruang untuk menulis</p>
+      <h2>Tulis Harapanmu</h2>
+      <form class="wish-form" id="quick-wish-form">
+        <textarea
+          class="wish-field"
+          id="quick-wish-input"
+          maxlength="500"
+          placeholder="Tuliskan cerita, doa, atau harapanmu hari ini..."
+          required></textarea>
+        <div class="wish-link-tools">
+          <button type="button" class="link-chip-btn" id="quick-insert-link-btn">🔗 Sisipkan tautan</button>
+        </div>
+        <div class="link-insert-row" id="quick-link-insert-row" hidden>
+          <input type="text" class="link-insert-field" id="quick-link-label-input" placeholder="Teks tampilan, mis. Lagu untukmu" maxlength="60">
+          <input type="url" class="link-insert-field" id="quick-link-url-input" placeholder="https://...">
+          <div class="link-insert-actions">
+            <button type="button" class="btn-secondary" id="quick-link-insert-confirm">Tambahkan</button>
+            <button type="button" class="link-btn" id="quick-link-insert-cancel">Batal</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Kirim Harapan</button>
+        <button type="button" class="link-btn" id="quick-write-cancel-btn">Batal, kembali ke taman</button>
+      </form>
+    </div>
+  </div>
 
   <script src="js/flowers-data.js"></script>
   <script src="js/ambient-bg.js"></script>
