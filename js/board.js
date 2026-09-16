@@ -134,7 +134,9 @@
         victoryFired = true;
         setTimeout(() => callbacks.onVictory && callbacks.onVictory(), CLEAR_ANIM_MS + 150);
       }
+      return true;
     }
+    return false;
   }
 
   // ---------- tray ----------
@@ -299,10 +301,16 @@
     placeShapeAt(shape, originR, originC);
     trayShapes[slotIndex] = null;
     renderTray();
-    afterPlacementResolve();
+    const didClear = afterPlacementResolve();
 
     if (trayShapes.every(s => s === null)){
       setTimeout(spawnNewTray, CLEAR_ANIM_MS + 60);
+    } else if (didClear){
+      // grid[r][c] only actually becomes null once clearLines()'s own
+      // setTimeout has run. Checking placeability before that reads the
+      // stale, still-full board and can wrongly report "stuck" right
+      // after a clear that would have freed up space.
+      setTimeout(checkStuckState, CLEAR_ANIM_MS + 20);
     } else {
       checkStuckState();
     }

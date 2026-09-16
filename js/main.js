@@ -2,6 +2,7 @@
 
   let flowersData = window.FLOWERS_FALLBACK || [];
   let currentFlower = null;
+  let lastFlowerId = null;
 
   const el = {
     introOverlay: document.getElementById('intro-overlay'),
@@ -73,7 +74,17 @@
   // the fetched copy once it resolves.
 
   function pickRandomFlower(){
-    return flowersData[Math.floor(Math.random() * flowersData.length)];
+    if (flowersData.length <= 1) return flowersData[0];
+    // Still uniform random overall — this just refuses to pick the exact
+    // same flower as last time, so two sessions in a row never repeat.
+    let candidate;
+    let attempts = 0;
+    do {
+      candidate = flowersData[Math.floor(Math.random() * flowersData.length)];
+      attempts++;
+    } while (candidate.id === lastFlowerId && attempts < 10);
+    lastFlowerId = candidate.id;
+    return candidate;
   }
 
   function showOverlay(overlayEl){
