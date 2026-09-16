@@ -2,7 +2,8 @@
  * "Taman Harapan" wish wall: stores wishes in Firestore (collection
  * "wishes") so everyone playing the game sees the same shared wall in
  * realtime, assigns a random anonymous flower-themed handle, and renders
- * a masonry sticky-note board with lightweight reactions.
+ * a masonry sticky-note board with lightweight reactions and threaded
+ * replies (subcollection "replies" under each wish).
  *
  * Requires js/firebase-config.js (loaded before this file) to have set
  * up window.db via the Firebase compat SDK.
@@ -16,6 +17,7 @@
 
   const REACTED_KEY = 'rehatBunga.reacted.v1';
   const WISH_TEXT_MAX = 500;
+  const REPLY_TEXT_MAX = 300;
 
   const HANDLE_PREFIXES = ['Teman Bunga', 'Pencinta', 'Sahabat', 'Penjaga', 'Perawat'];
   const HANDLE_FLOWERS = [
@@ -70,6 +72,21 @@
   let wallContainer = null;
   let latestWishes = [];
   const wallQuery = { search: '', sort: 'terbaru', flower: '' };
+
+  // Reply threads are only "live" (a subcollection onSnapshot listener)
+  // while their card is expanded — opening every thread for all 200
+  // wishes at once would be wasteful. expandedWishIds survives across
+  // re-renders (which happen on every wall-wide change) so an open
+  // thread doesn't collapse just because someone else reacted to a
+  // different wish. replyUnsubs is torn down and rebuilt every render
+  // pass since the DOM nodes it points at are recreated each time.
+  const expandedWishIds = new Set();
+  let replyUnsubs = {};
+
+  function teardownReplyListeners(){
+    Object.values(replyUnsubs).forEach(fn => { if (fn) fn(); });
+    replyUnsubs = {};
+  }
 
   function sumReactions(wish){
     const r = wish.reactions || {};
@@ -174,18 +191,39 @@
       text: trimmed,
       flowerName: flowerName || '',
       reactions: { rasa: 0, peluk: 0, semangat: 0 },
+      replyCount: 0,
       ts: firebase.firestore.FieldValue.serverTimestamp()
     });
   }
 
-  function toggleReaction(wishId, reactionKey, btnEl){
+  // Adds a reply under a wish and bumps that wish's replyCount in one
+  // atomic batch — a reply is never saved without the counter following.
+  function addReply(wishId, text){
+    const trimmed = text.trim().slice(0, REPLY_TEXT_MAX);
+    const wishRef = window.db.collection('wishes').doc(wishId);
+    const replyRef = wishRef.collection('replies').doc();
+    const batch = window.db.batch();
+    batch.set(replyRef, {
+      handle: randomHandle(),
+      text: trimmed,
+      reactions: { rasa: 0, peluk: 0, semangat: 0 },
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    batch.update(wishRef, { replyCount: firebase.firestore.FieldValue.increment(1) });
+    return batch.commit();
+  }
+
+  // Generic reaction toggle — works for a wish doc or a reply doc, since
+  // both share the same {rasa, peluk, semangat} reactions shape. `id` is
+  // just the sessionStorage flag key (wish.id or reply.id); docRef is the
+  // actual Firestore reference to update.
+  function toggleReaction(docRef, id, reactionKey, btnEl){
     const reacted = loadReactedSet();
-    const flag = wishId + ':' + reactionKey;
+    const flag = id + ':' + reactionKey;
     const alreadyReacted = reacted.has(flag);
     const delta = alreadyReacted ? -1 : 1;
 
-    const wishRef = window.db.collection('wishes').doc(wishId);
-    wishRef.update({
+    docRef.update({
       [`reactions.${reactionKey}`]: firebase.firestore.FieldValue.increment(delta)
     }).then(() => {
       if (alreadyReacted){
@@ -201,8 +239,112 @@
     }).catch(() => { /* offline or blocked by rules — silently skip */ });
   }
 
+  function buildReactionsRow(docRef, id, reactions, reacted){
+    const row = document.createElement('div');
+    row.className = 'sticky-reactions';
+    REACTIONS.forEach(r => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'reaction-btn';
+      if (reacted.has(id + ':' + r.key)) btn.classList.add('is-active');
+      btn.setAttribute('aria-label', r.label);
+      btn.title = r.label;
+      btn.innerHTML = `<span aria-hidden="true">${r.emoji}</span><span class="reaction-count">${(reactions && reactions[r.key]) || 0}</span>`;
+      btn.addEventListener('click', () => toggleReaction(docRef, id, r.key, btn));
+      row.appendChild(btn);
+    });
+    return row;
+  }
+
+  function renderReplyList(container, wishId, replies){
+    const reacted = loadReactedSet();
+    container.innerHTML = '';
+
+    if (!replies.length){
+      const empty = document.createElement('p');
+      empty.className = 'reply-empty';
+      empty.textContent = 'Belum ada balasan. Jadilah yang pertama.';
+      container.appendChild(empty);
+      return;
+    }
+
+    replies.forEach(reply => {
+      const item = document.createElement('div');
+      item.className = 'reply-item';
+
+      const handle = document.createElement('p');
+      handle.className = 'reply-handle';
+      handle.textContent = reply.handle;
+      item.appendChild(handle);
+
+      const text = document.createElement('p');
+      text.className = 'reply-text';
+      renderWishText(text, reply.text);
+      item.appendChild(text);
+
+      const replyRef = window.db.collection('wishes').doc(wishId).collection('replies').doc(reply.id);
+      item.appendChild(buildReactionsRow(replyRef, reply.id, reply.reactions, reacted));
+
+      container.appendChild(item);
+    });
+  }
+
+  function buildReplyThread(wish){
+    const wrap = document.createElement('div');
+    wrap.className = 'reply-thread';
+
+    const list = document.createElement('div');
+    list.className = 'reply-list';
+    wrap.appendChild(list);
+
+    const form = document.createElement('form');
+    form.className = 'reply-form';
+
+    const input = document.createElement('textarea');
+    input.className = 'reply-field';
+    input.maxLength = REPLY_TEXT_MAX;
+    input.placeholder = 'Tulis balasan...';
+    input.required = true;
+    form.appendChild(input);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.className = 'btn-secondary reply-send-btn';
+    submitBtn.textContent = 'Kirim';
+    form.appendChild(submitBtn);
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      submitBtn.disabled = true;
+      addReply(wish.id, text)
+        .then(() => {
+          input.value = '';
+          submitBtn.disabled = false;
+        })
+        .catch(() => {
+          submitBtn.disabled = false;
+          alert('Balasan belum berhasil terkirim. Coba cek koneksimu ya.');
+        });
+    });
+
+    wrap.appendChild(form);
+
+    const unsub = window.db.collection('wishes').doc(wish.id).collection('replies')
+      .orderBy('ts', 'asc')
+      .onSnapshot(snapshot => {
+        const replies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderReplyList(list, wish.id, replies);
+      });
+    replyUnsubs[wish.id] = unsub;
+
+    return wrap;
+  }
+
   function renderWishes(container, wishes, emptyMessage){
     const reacted = loadReactedSet();
+    teardownReplyListeners();
     container.innerHTML = '';
 
     if (!wishes.length){
@@ -227,22 +369,26 @@
       renderWishText(text, wish.text);
       card.appendChild(text);
 
-      const reactionsRow = document.createElement('div');
-      reactionsRow.className = 'sticky-reactions';
+      const wishRef = window.db.collection('wishes').doc(wish.id);
+      card.appendChild(buildReactionsRow(wishRef, wish.id, wish.reactions, reacted));
 
-      REACTIONS.forEach(r => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'reaction-btn';
-        if (reacted.has(wish.id + ':' + r.key)) btn.classList.add('is-active');
-        btn.setAttribute('aria-label', r.label);
-        btn.title = r.label;
-        btn.innerHTML = `<span aria-hidden="true">${r.emoji}</span><span class="reaction-count">${(wish.reactions && wish.reactions[r.key]) || 0}</span>`;
-        btn.addEventListener('click', () => toggleReaction(wish.id, r.key, btn));
-        reactionsRow.appendChild(btn);
+      const replyToggle = document.createElement('button');
+      replyToggle.type = 'button';
+      replyToggle.className = 'reply-toggle-btn';
+      const isExpanded = expandedWishIds.has(wish.id);
+      replyToggle.textContent = `💬 Balas (${wish.replyCount || 0})`;
+      replyToggle.setAttribute('aria-expanded', String(isExpanded));
+      replyToggle.addEventListener('click', () => {
+        if (expandedWishIds.has(wish.id)) expandedWishIds.delete(wish.id);
+        else expandedWishIds.add(wish.id);
+        applyWallQuery();
       });
+      card.appendChild(replyToggle);
 
-      card.appendChild(reactionsRow);
+      if (isExpanded){
+        card.appendChild(buildReplyThread(wish));
+      }
+
       container.appendChild(card);
     });
   }
@@ -270,6 +416,7 @@
         populateFlowerFilter(document.getElementById('wall-filter-select'));
         applyWallQuery();
       }, () => {
+        teardownReplyListeners();
         container.innerHTML = '';
         const err = document.createElement('p');
         err.className = 'wall-empty';
