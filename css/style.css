@@ -325,7 +325,10 @@ button{ font-family: inherit; }
 
 .modal-actions{
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
+  gap: 16px;
   margin-top: 22px;
 }
 
@@ -821,6 +824,41 @@ button{ font-family: inherit; }
   margin: 0 auto;
   line-height: 1.6;
 }
+
+.wall-toolbar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.wall-search-input,
+.wall-select{
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.wall-search-input{
+  flex: 1 1 180px;
+  min-width: 140px;
+}
+
+.wall-select{ cursor: pointer; }
+
+.wall-search-input:focus,
+.wall-select:focus{
+  outline: none;
+  border-color: var(--rose-deep);
+}
+
+#quick-write-card{ max-width: 480px; }
 
 .wall-masonry{
   column-count: 1;
