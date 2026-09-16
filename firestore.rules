@@ -11,7 +11,7 @@ service cloud.firestore {
       // diharapkan: field lengkap, text bukan string kosong dan ga
       // kepanjangan, reaction mulai dari 0.
       allow create: if request.resource.data.keys().hasOnly(
-                        ['handle', 'text', 'flowerName', 'reactions', 'ts']
+                        ['handle', 'text', 'flowerName', 'reactions', 'replyCount', 'ts']
                       )
                     && request.resource.data.text is string
                     && request.resource.data.text.size() > 0
@@ -23,16 +23,77 @@ service cloud.firestore {
                     && request.resource.data.reactions.keys().hasOnly(['rasa', 'peluk', 'semangat'])
                     && request.resource.data.reactions.rasa == 0
                     && request.resource.data.reactions.peluk == 0
+                    && request.resource.data.reactions.semangat == 0
+                    && request.resource.data.replyCount == 0;
+
+      // Update boleh buat DUA hal aja:
+      // 1) naik/turunin SATU reaction sebesar PERSIS 1 per panggilan
+      // 2) naikin replyCount PERSIS 1, dipicu otomatis pas ada reply baru
+      // Field lain (handle/text/flowerName) harus tetap sama, dan ga
+      // boleh sampai minus.
+      allow update: if (
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+                      && request.resource.data.handle == resource.data.handle
+                      && request.resource.data.text == resource.data.text
+                      && request.resource.data.flowerName == resource.data.flowerName
+                      && request.resource.data.reactions.keys().hasOnly(['rasa', 'peluk', 'semangat'])
+                      && request.resource.data.reactions.rasa >= 0
+                      && request.resource.data.reactions.peluk >= 0
+                      && request.resource.data.reactions.semangat >= 0
+                      && (
+                        (
+                          (request.resource.data.reactions.rasa == resource.data.reactions.rasa + 1
+                            || request.resource.data.reactions.rasa == resource.data.reactions.rasa - 1)
+                          && request.resource.data.reactions.peluk == resource.data.reactions.peluk
+                          && request.resource.data.reactions.semangat == resource.data.reactions.semangat
+                        ) || (
+                          (request.resource.data.reactions.peluk == resource.data.reactions.peluk + 1
+                            || request.resource.data.reactions.peluk == resource.data.reactions.peluk - 1)
+                          && request.resource.data.reactions.rasa == resource.data.reactions.rasa
+                          && request.resource.data.reactions.semangat == resource.data.reactions.semangat
+                        ) || (
+                          (request.resource.data.reactions.semangat == resource.data.reactions.semangat + 1
+                            || request.resource.data.reactions.semangat == resource.data.reactions.semangat - 1)
+                          && request.resource.data.reactions.rasa == resource.data.reactions.rasa
+                          && request.resource.data.reactions.peluk == resource.data.reactions.peluk
+                        )
+                      )
+                    ) || (
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount'])
+                      && request.resource.data.handle == resource.data.handle
+                      && request.resource.data.text == resource.data.text
+                      && request.resource.data.flowerName == resource.data.flowerName
+                      && request.resource.data.reactions == resource.data.reactions
+                      && request.resource.data.replyCount ==
+                           (('replyCount' in resource.data) ? resource.data.replyCount + 1 : 1)
+                    );
+
+      allow delete: if false;
+    }
+
+    // Balasan per harapan. Bentuknya sengaja mirip dokumen wish (handle +
+    // reactions sama), tapi lebih ringkas (tanpa flowerName/replyCount)
+    // karena ini balasan, bukan harapan baru.
+    match /wishes/{wishId}/replies/{replyId} {
+
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasOnly(
+                        ['handle', 'text', 'reactions', 'ts']
+                      )
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 300
+                    && request.resource.data.handle is string
+                    && request.resource.data.handle.size() <= 60
+                    && request.resource.data.reactions.keys().hasOnly(['rasa', 'peluk', 'semangat'])
+                    && request.resource.data.reactions.rasa == 0
+                    && request.resource.data.reactions.peluk == 0
                     && request.resource.data.reactions.semangat == 0;
 
-      // Update HANYA boleh buat naik/turunin SATU reaction sebesar
-      // PERSIS 1 per panggilan (bukan sembarang angka), field lain
-      // (handle/text/flowerName/reactions lainnya) harus tetap sama,
-      // dan ga boleh sampai minus.
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
                     && request.resource.data.handle == resource.data.handle
                     && request.resource.data.text == resource.data.text
-                    && request.resource.data.flowerName == resource.data.flowerName
                     && request.resource.data.reactions.keys().hasOnly(['rasa', 'peluk', 'semangat'])
                     && request.resource.data.reactions.rasa >= 0
                     && request.resource.data.reactions.peluk >= 0
